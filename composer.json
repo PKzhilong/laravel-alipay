@@ -1,0 +1,21 @@
+{
+    "name": "pkzhilong/laravel-alipay",
+    "description": "this is alipay which is base on alipay sdk",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "xingzhilong",
+            "email": "339191949@qq.com"
+        }
+    ],
+    "autoload": {
+        "classmap": [
+            "src/alipay"
+        ],
+        "psr-4": {
+            "Laravel\\AliPay\\": "src/"
+        }
+    },
+    "minimum-stability": "dev",
+    "require": {}
+}
