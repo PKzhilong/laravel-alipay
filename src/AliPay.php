@@ -7,14 +7,16 @@
  */
 namespace Laravel\AliPay;
 
+use Laravel\AliPay\BuilderQuery\AlipayFundTransToaccountTransferContentBuilder;
 use Laravel\AliPay\BuilderQuery\AlipayTradePagePayContentBuilder;
 use Laravel\AliPay\BuilderQuery\AlipayTradeRefundContentBuilder;
 
 class AliPay
 {
     private $config;
-    private $orderData;
-    private $orderRefundData;
+    private $orderData;//下单数据实例
+    private $orderRefundData;//退款数据实例
+    public $orderWithdrawalData; //提现数据实例
 
     //支付宝网关地址
     public $gateway_url;
@@ -72,6 +74,7 @@ class AliPay
         }
         $this->orderData = new AlipayTradePagePayContentBuilder();
         $this->orderRefundData = new AlipayTradeRefundContentBuilder();
+        $this->orderWithdrawalData = new AlipayFundTransToaccountTransferContentBuilder();
         return $this;
     }
 
@@ -117,6 +120,21 @@ class AliPay
         return $this;
     }
 
+    public function buildWithdrawalOrder(array $withdrawalArray = [])
+    {
+        $withdrawalArray['out_biz_no'] = $this->generateOutTradeNo(32);
+        $withdrawalArray['payee_type'] = '';
+        if (count($withdrawalArray)) {
+            foreach ($withdrawalArray as $key => $item) {
+                $keyEnd = str_replace('_', ' ', $key);
+                $keyEnd = ucwords($keyEnd);
+                $keyEnd = 'set' . str_replace(' ', '', $keyEnd);
+                $this->orderWithdrawalData->$keyEnd($item);
+            }
+        }
+        return $this;
+    }
+
     /**
      * 调用支付接口
      * @param $return_url
@@ -141,7 +159,7 @@ class AliPay
      * alipay.trade.refund (统一收单交易退款接口)
      * @return array
      */
-    function refund(){
+    public function refund(){
         $biz_content=$this->orderRefundData->getBizContent();
         //打印业务参数
         $request = new \AlipayTradeRefundRequest();
@@ -149,6 +167,20 @@ class AliPay
 
         $response = $this->aopclientRequestExecute ($request, false);
         $response = $response->alipay_trade_refund_response;
+        return $response;
+    }
+
+    /**
+     * alipay.fund.trans.toaccount.transfer(单笔转账到支付宝账户接口)
+     * @return array
+     */
+    public function transfer()
+    {
+        $biz_content = $this->orderWithdrawalData->getBizContent();
+        $request = new \AlipayFundTransToaccountTransferRequest();
+        $request->setBizContent($biz_content);
+
+        $response = $this->aopclientRequestExecute($request, false);
         return $response;
     }
 
@@ -169,6 +201,7 @@ class AliPay
         $aop->postCharset = $this->charset;
         $aop->format= $this->format;
         $aop->signType=$this->signtype;
+
         // 开启页面信息输出
         $aop->debugInfo=true;
         if($isPage)
