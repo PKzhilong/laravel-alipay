@@ -18,10 +18,7 @@
          'total_amount' => $taskStage->cost, //交易额
          'subject' => '大宅世家资金托管', //交易描述
          'body'      => '大宅世家资金托管-1', //交易标题 
-     ])->pagePay(
-         route($return_url, ['taskStage_id' => $taskStage->id, 'out_trade_no' => $this->aliPay->out_trade_no]),
-         route($notify_url, ['taskStage_id' => $taskStage->id, 'out_trade_no' => $this->aliPay->out_trade_no])
-    );
+     ])->pagePay($reutrn_url, $notify_url);
   
 ```
 >注意： 以上buildOrder中的参数值必须填写，
